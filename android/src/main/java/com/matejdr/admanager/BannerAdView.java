@@ -1,5 +1,6 @@
 package com.matejdr.admanager;
 
+import android.app.Activity;
 import android.content.Context;
 import android.location.Location;
 import android.os.Bundle;
@@ -31,11 +32,10 @@ import java.util.List;
 import com.matejdr.admanager.customClasses.CustomTargeting;
 import com.matejdr.admanager.utils.Targeting;
 
-
 class BannerAdView extends ReactViewGroup implements AppEventListener, LifecycleEventListener {
 
     protected AdManagerAdView adView;
-
+    Activity currentActivityContext = null;
     String[] testDevices;
     AdSize[] validAdSizes;
     String adUnitID;
@@ -73,6 +73,7 @@ class BannerAdView extends ReactViewGroup implements AppEventListener, Lifecycle
 
     public BannerAdView(final Context context, ReactApplicationContext applicationContext) {
         super(context);
+        currentActivityContext = applicationContext.getCurrentActivity();
         applicationContext.addLifecycleEventListener(this);
         this.createAdView();
     }
@@ -97,18 +98,15 @@ class BannerAdView extends ReactViewGroup implements AppEventListener, Lifecycle
     private void createAdView() {
         if (this.adView != null) this.adView.destroy();
 
-
         AdManagerAdView.LayoutParams layoutParams = new AdManagerAdView.LayoutParams(ReactViewGroup.LayoutParams.MATCH_PARENT, ReactViewGroup.LayoutParams.WRAP_CONTENT);
 
-        final Context context = getContext();
-        this.adView = new AdManagerAdView(context);
+        this.adView = new AdManagerAdView(currentActivityContext);
         this.adView.setLayoutParams(layoutParams);
         this.adView.setAppEventListener(this);
         this.adView.setAdListener(new AdListener() {
             @Override
             public void onAdLoaded() {
                 AdSize adSize = adView.getAdSize();
-
 
                 if (isFluid()) {
                     top = 0;
@@ -375,6 +373,7 @@ class BannerAdView extends ReactViewGroup implements AppEventListener, Lifecycle
     @Override
     public void onHostDestroy() {
         if (this.adView != null) {
+            this.currentActivityContext = null;
             this.adView.destroy();
         }
     }
