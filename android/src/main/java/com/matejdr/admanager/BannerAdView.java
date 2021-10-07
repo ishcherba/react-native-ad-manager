@@ -1,5 +1,6 @@
 package com.matejdr.admanager;
 
+import android.app.Activity;
 import android.content.Context;
 import android.location.Location;
 import android.os.Bundle;
@@ -34,7 +35,7 @@ import com.matejdr.admanager.utils.Targeting;
 class BannerAdView extends ReactViewGroup implements AppEventListener, LifecycleEventListener {
 
     protected AdManagerAdView adView;
-
+    Activity currentActivityContext = null;
     String[] testDevices;
     AdSize[] validAdSizes;
     String adUnitID;
@@ -50,38 +51,94 @@ class BannerAdView extends ReactViewGroup implements AppEventListener, Lifecycle
     Location location;
     String correlator;
 
+    int top;
+    int left;
+    int width;
+    int height;
+
+    private class MeasureAndLayoutRunnable implements Runnable {
+        @Override
+        public void run() {
+            if (isFluid()) {
+                adView.measure(
+                        MeasureSpec.makeMeasureSpec(getWidth(), MeasureSpec.EXACTLY),
+                        MeasureSpec.makeMeasureSpec(getHeight(), MeasureSpec.EXACTLY)
+                );
+            } else {
+                adView.measure(width, height);
+            }
+            adView.layout(left, top, left + width, top + height);
+        }
+    }
+
     public BannerAdView(final Context context, ReactApplicationContext applicationContext) {
         super(context);
+        currentActivityContext = applicationContext.getCurrentActivity();
         applicationContext.addLifecycleEventListener(this);
         this.createAdView();
     }
 
+    @Override
+    public void requestLayout() {
+        super.requestLayout();
+        post(new MeasureAndLayoutRunnable());
+    }
+
+    private boolean isFluid() {
+        AdSize adSize = adView.getAdSize();
+
+        if (adSize == null) {
+            return false;
+        }
+
+        return adSize == AdSize.FLUID || adSize.toString().equals("320x50_mb");
+    }
+
+
     private void createAdView() {
         if (this.adView != null) this.adView.destroy();
 
-        final Context context = getContext();
-        this.adView = new AdManagerAdView(context);
+        AdManagerAdView.LayoutParams layoutParams = new AdManagerAdView.LayoutParams(ReactViewGroup.LayoutParams.MATCH_PARENT, ReactViewGroup.LayoutParams.WRAP_CONTENT);
+
+        this.adView = new AdManagerAdView(currentActivityContext);
+        this.adView.setLayoutParams(layoutParams);
         this.adView.setAppEventListener(this);
         this.adView.setAdListener(new AdListener() {
             @Override
             public void onAdLoaded() {
-                int width = adView.getAdSize().getWidthInPixels(context);
-                int height = adView.getAdSize().getHeightInPixels(context);
-                int left = adView.getLeft();
-                int top = adView.getTop();
-                adView.measure(width, height);
-                adView.layout(left, top, left + width, top + height);
-                sendOnSizeChangeEvent();
+                AdSize adSize = adView.getAdSize();
+
+                if (isFluid()) {
+                    top = 0;
+                    left = 0;
+                    width = getWidth();
+                    height = getHeight();
+                } else {
+                    top = adView.getTop();
+                    left = adView.getLeft();
+                    width = adView.getAdSize().getWidthInPixels(getContext());
+                    height = adView.getAdSize().getHeightInPixels(getContext());
+                }
+
+                if (!isFluid()) {
+                    sendOnSizeChangeEvent();
+                }
+
                 WritableMap ad = Arguments.createMap();
                 ad.putString("type", "banner");
+                ad.putString("gadSize", adSize.toString());
+                ad.putString("isFluid", String.valueOf(isFluid()));
+                ad.putInt("width", width);
+                ad.putInt("height", height);
 
-                WritableMap gadSize = Arguments.createMap();
-                gadSize.putDouble("width", adView.getAdSize().getWidth());
-                gadSize.putDouble("height", adView.getAdSize().getHeight());
+                ad.putInt("adWidth", adView.getAdSize().getWidthInPixels(getContext()));
+                ad.putInt("adHeight", adView.getAdSize().getHeightInPixels(getContext()));
 
-                ad.putMap("gadSize", gadSize);
+                ad.putInt("measuredWidth", getMeasuredWidth());
+                ad.putInt("measuredHeight", getMeasuredHeight());
 
-                //ad.putString("gadSize", adView.getAdSize().toString());
+                ad.putInt("left", left);
+                ad.putInt("top", top);
                 sendEvent(RNAdManagerBannerViewManager.EVENT_AD_LOADED, ad);
             }
 
@@ -316,6 +373,7 @@ class BannerAdView extends ReactViewGroup implements AppEventListener, Lifecycle
     @Override
     public void onHostDestroy() {
         if (this.adView != null) {
+            this.currentActivityContext = null;
             this.adView.destroy();
         }
     }

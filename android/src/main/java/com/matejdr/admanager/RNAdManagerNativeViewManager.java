@@ -259,6 +259,8 @@ public class RNAdManagerNativeViewManager extends ViewGroupManager<NativeAdViewC
 
     private AdSize getAdSizeFromString(String adSize) {
         switch (adSize) {
+            case "fluid":
+                return AdSize.FLUID;
             case "banner":
                 return AdSize.BANNER;
             case "largeBanner":
