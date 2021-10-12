@@ -194,6 +194,8 @@ public class RNAdManagerBannerViewManager extends ViewGroupManager<BannerAdView>
         switch (adSize) {
             case "fluid":
                 return AdSize.FLUID;
+            case "banner":
+                return AdSize.BANNER;
             case "largeBanner":
                 return AdSize.LARGE_BANNER;
             case "mediumRectangle":
