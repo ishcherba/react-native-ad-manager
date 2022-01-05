@@ -214,7 +214,7 @@ public class RNAdManagerBannerViewManager extends ViewGroupManager<BannerAdView>
                 return new AdSize(300, 600);
             case "300x250":
                 return new AdSize(300, 250);
-            case "220x72"
+            case "220x72":
                 return new AdSize(220, 72);
             default:
                 return AdSize.BANNER;
