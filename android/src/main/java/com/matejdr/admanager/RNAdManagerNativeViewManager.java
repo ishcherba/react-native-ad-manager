@@ -283,6 +283,8 @@ public class RNAdManagerNativeViewManager extends ViewGroupManager<NativeAdViewC
                 return new AdSize(300, 250);
             case "220x72":
                 return new AdSize(220, 72);
+            case "144x72":
+                return new AdSize(144, 72);
             default:
                 return AdSize.BANNER;
         }
