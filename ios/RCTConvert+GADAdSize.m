@@ -29,8 +29,6 @@
         return GADAdSizeFromCGSize(CGSizeMake(300, 250));
     } else if ([adSize isEqualToString:@"220x72"]) {
         return GADAdSizeFromCGSize(CGSizeMake(220, 72));
-    } else if ([adSize isEqualToString:@"144x72"]) {
-        return GADAdSizeFromCGSize(CGSizeMake(144, 72));
     }
     else {
         return kGADAdSizeInvalid;
