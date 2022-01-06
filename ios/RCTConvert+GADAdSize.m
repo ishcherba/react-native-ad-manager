@@ -26,8 +26,10 @@
     } else if ([adSize isEqualToString:@"300x600"]) {
         return GADAdSizeFromCGSize(CGSizeMake(300, 600));
     } else if ([adSize isEqualToString:@"300x250"]) {
-             return GADAdSizeFromCGSize(CGSizeMake(300, 250));
-         }
+        return GADAdSizeFromCGSize(CGSizeMake(300, 250));
+    } else if ([adSize isEqualToString:@"220x72"]) {
+        return GADAdSizeFromCGSize(CGSizeMake(220, 72));
+    }
     else {
         return kGADAdSizeInvalid;
     }
