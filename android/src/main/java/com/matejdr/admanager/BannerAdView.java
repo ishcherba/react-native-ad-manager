@@ -1,7 +1,6 @@
 package com.matejdr.admanager;
 
 import android.app.Activity;
-import android.content.Context;
 import android.location.Location;
 import android.os.Bundle;
 
@@ -56,24 +55,10 @@ class BannerAdView extends ReactViewGroup implements AppEventListener, Lifecycle
     int width;
     int height;
 
-    private class MeasureAndLayoutRunnable implements Runnable {
-        @Override
-        public void run() {
-            if (isFluid()) {
-                adView.measure(
-                        MeasureSpec.makeMeasureSpec(getWidth(), MeasureSpec.EXACTLY),
-                        MeasureSpec.makeMeasureSpec(getHeight(), MeasureSpec.EXACTLY)
-                );
-            } else {
-                adView.measure(width, height);
-            }
-            adView.layout(left, top, left + width, top + height);
-        }
-    }
 
-    public BannerAdView(final Context context, ReactApplicationContext applicationContext) {
+    public BannerAdView(final ThemedReactContext context, ReactApplicationContext applicationContext) {
         super(context);
-        currentActivityContext = applicationContext.getCurrentActivity();
+        currentActivityContext = context.getCurrentActivity();
         applicationContext.addLifecycleEventListener(this);
         this.createAdView();
     }
@@ -93,6 +78,7 @@ class BannerAdView extends ReactViewGroup implements AppEventListener, Lifecycle
 
 
     private void createAdView() {
+        if (this.currentActivityContext == null) return;
         if (this.adView != null) this.adView.destroy();
 
         AdManagerAdView.LayoutParams layoutParams = new AdManagerAdView.LayoutParams(ReactViewGroup.LayoutParams.MATCH_PARENT, ReactViewGroup.LayoutParams.WRAP_CONTENT);
@@ -295,13 +281,15 @@ class BannerAdView extends ReactViewGroup implements AppEventListener, Lifecycle
     }
 
     public void setAdUnitID(String adUnitID) {
-        if (this.adUnitID != null) {
-            // We can only set adUnitID once, so when it was previously set we have
-            // to recreate the view
-            this.createAdView();
+        if (this.adView != null) {
+            if (this.adUnitID != null) {
+                // We can only set adUnitID once, so when it was previously set we have
+                // to recreate the view
+                this.createAdView();
+            }
+            this.adUnitID = adUnitID;
+            this.adView.setAdUnitId(adUnitID);
         }
-        this.adUnitID = adUnitID;
-        this.adView.setAdUnitId(adUnitID);
     }
 
     public void setTestDevices(String[] testDevices) {
@@ -372,6 +360,23 @@ class BannerAdView extends ReactViewGroup implements AppEventListener, Lifecycle
         if (this.adView != null) {
             this.currentActivityContext = null;
             this.adView.destroy();
+        }
+    }
+
+    private class MeasureAndLayoutRunnable implements Runnable {
+        @Override
+        public void run() {
+            if (adView == null) return;
+
+            if (isFluid()) {
+                adView.measure(
+                        MeasureSpec.makeMeasureSpec(getWidth(), MeasureSpec.EXACTLY),
+                        MeasureSpec.makeMeasureSpec(getHeight(), MeasureSpec.EXACTLY)
+                );
+            } else {
+                adView.measure(width, height);
+            }
+            adView.layout(left, top, left + width, top + height);
         }
     }
 }
